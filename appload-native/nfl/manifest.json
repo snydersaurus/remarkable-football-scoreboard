@@ -1,0 +1,10 @@
+{
+    "id": "nfl-scoreboard",
+    "name": "NFL",
+    "loadsBackend": true,
+    "entry": "/ui/Main.qml",
+    "supportsScaling": true,
+    "canHaveMultipleFrontends": false,
+    "aspectRatio": "auto",
+    "disablesWindowedMode": true
+}

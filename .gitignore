@@ -1,0 +1,13 @@
+build-*/
+docker/rmpp-sdk.sh
+appload-native/out/
+appload-native/resources.rcc
+# Regenerable by tools/fixtures.sh, ~1MB, and stale within the week.
+tools/fixtures/
+tools/fixtures-live/
+tools/fixtures-real/
+# Screenshots and scratch renders, but never the launcher icons -- the build
+# needs one per league.
+*.png
+!appload-native/*/icon.png
+!preview-*.png

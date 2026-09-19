@@ -1,0 +1,16 @@
+<RCC>
+    <qresource>
+        <file>ui/Main.qml</file>
+        <file>ui/Board.qml</file>
+        <file>ui/FieldStrip.qml</file>
+        <file>ui/LineScore.qml</file>
+        <file>ui/LiveList.qml</file>
+        <file>ui/MatchupCard.qml</file>
+        <file>ui/ScheduleRow.qml</file>
+        <file>ui/Slate.qml</file>
+        <file>ui/StatusStrip.qml</file>
+        <file>ui/TeamPicker.qml</file>
+        <file>ui/TeamLogo.qml</file>
+        <file>ui/TimeoutRow.qml</file>
+    </qresource>
+</RCC>

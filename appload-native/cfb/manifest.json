@@ -1,0 +1,10 @@
+{
+    "id": "cfb-scoreboard",
+    "name": "College FB",
+    "loadsBackend": true,
+    "entry": "/ui/Main.qml",
+    "supportsScaling": true,
+    "canHaveMultipleFrontends": false,
+    "aspectRatio": "auto",
+    "disablesWindowedMode": true
+}
