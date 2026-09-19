@@ -1,4 +1,4 @@
-# Football scoreboard — reMarkable Paper Pro
+# Football scoreboard — reMarkable Paper Pro Move
 
 A Qt Quick scoreboard for college football and the NFL, running as an AppLoad
 app on a reMarkable Paper Pro Move — a window inside xochitl, not a takeover of
