@@ -70,6 +70,10 @@ rest of the device.
 RM_HOST=10.11.99.1 ./deploy.sh both                            # or cfb / nfl
 ```
 
+`package.sh` turns that output into the release zips — one per league, each
+carrying an `install.sh` that needs only ssh and scp, so nobody downloading a
+build needs Docker or the 460MB SDK.
+
 `build.sh` cross-compiles, packs a bundle per league, and verifies each one:
 every qrc entry present, newer than every QML source, carrying the right
 application id. rcc packages files without parsing them and does not always
