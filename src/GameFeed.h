@@ -3,7 +3,6 @@
 #include <QObject>
 #include <QVariantMap>
 #include <QVariantList>
-#include <QTimer>
 #include <QNetworkAccessManager>
 #include <QHash>
 #include <QSet>
@@ -11,6 +10,7 @@
 #include <functional>
 
 #include "League.h"
+#include "WakeTimer.h"
 
 /*
  * Pulls football state from ESPN's public site API. No key, no auth.
@@ -103,14 +103,18 @@ private:
 
     League m_league;
     int m_teamId;
+    // Wall-clock seconds at the last refresh, to notice the tablet having
+    // slept in between. See refresh().
+    qint64 m_lastRefresh = 0;
     QString m_eventId;
     bool m_pinned = false;
 
     QNetworkAccessManager m_net;
-    QTimer m_pollTimer;
-    QTimer m_scheduleTimer;
-    QTimer m_teamTimer;
-    QTimer m_liveTimer;
+    // Not QTimer: these have to survive the tablet sleeping. See WakeTimer.h.
+    WakeTimer m_pollTimer;
+    WakeTimer m_scheduleTimer;
+    WakeTimer m_teamTimer;
+    WakeTimer m_liveTimer;
 
     // teamId -> that team's season, newest parse wins.
     QHash<int, QVariantList> m_season;

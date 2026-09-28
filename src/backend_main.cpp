@@ -37,6 +37,7 @@ constexpr quint32 MsgGeometry    = 4;   // frontend reporting its window size
 constexpr quint32 MsgWatchLive   = 5;   // contents: "1" while the live page is up
 constexpr quint32 MsgSetTeams    = 6;   // contents: "194,2754" -- the pair to follow
 constexpr quint32 MsgWantTeams   = 7;   // the picker opened; send the league's teams
+constexpr quint32 MsgRefresh     = 8;   // the app is back on screen; refetch now
 
 // The tablet autosleeps aggressively -- deep suspend roughly 40 seconds after
 // the last touch -- and nothing runs while it is down: no timers, no network.
@@ -283,6 +284,9 @@ int main(int argc, char *argv[])
             break;
         case MsgWantTeams:
             feed.loadTeamIndex();
+            break;
+        case MsgRefresh:
+            feed.refresh();
             break;
         case MsgSetTeams: {
             QList<int> ids;

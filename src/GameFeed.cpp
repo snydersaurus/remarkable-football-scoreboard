@@ -29,6 +29,14 @@ constexpr int kTeamMs     = 30 * 60 * 1000;
 // other, and that request is 23KB.
 constexpr int kLiveMs     = 60 * 1000;
 
+// A request that never answers has to fail eventually, or the poll behind it
+// has nothing to retry. Qt sets no transfer timeout by default.
+constexpr int kTimeoutMs  = 20 * 1000;
+
+// More wall-clock than this between two polls means the tablet was asleep,
+// not that a request was slow.
+constexpr int kSleptSecs  = 90;
+
 // ESPN stamps every date in UTC and the tablet's clock is UTC too
 // (/etc/localtime -> Universal), so a Saturday night kickoff is already
 // "Sunday" to the device. Everything shown to the reader is converted to
@@ -214,6 +222,14 @@ GameFeed::GameFeed(const League &league, int teamId, const QString &demoState,
         return;
     }
 
+    // Measured on the device: after a fifteen minute suspend, a reused
+    // keep-alive socket sat ESTABLISHED with 1761 bytes stuck in its send
+    // queue, retransmitting into a connection whose far end was long gone.
+    // Without a timeout that request hung forever, every later poll queued
+    // behind it, and the board simply stopped updating -- which is exactly
+    // what "it never refreshes after it sleeps" looks like from outside.
+    m_net.setTransferTimeout(kTimeoutMs);
+
     qInfo("league: %s  api=%s  teams=%s",
           qPrintable(m_league.key), qPrintable(m_league.api()),
           qPrintable([this] {
@@ -226,23 +242,23 @@ GameFeed::GameFeed(const League &league, int teamId, const QString &demoState,
           qPrintable(QSslSocket::sslLibraryBuildVersionString()),
           qPrintable(QSslSocket::sslLibraryVersionString()));
 
-    connect(&m_pollTimer, &QTimer::timeout, this, &GameFeed::refresh);
+    connect(&m_pollTimer, &WakeTimer::timeout, this, &GameFeed::refresh);
     m_pollTimer.start(kPollMs);
 
-    connect(&m_scheduleTimer, &QTimer::timeout, this, [this]() {
+    connect(&m_scheduleTimer, &WakeTimer::timeout, this, [this]() {
         for (int id : trackedTeams())
             requestSchedule(id);
     });
     m_scheduleTimer.start(kScheduleMs);
 
-    connect(&m_teamTimer, &QTimer::timeout, this, [this]() {
+    connect(&m_teamTimer, &WakeTimer::timeout, this, [this]() {
         for (int id : trackedTeams())
             requestTeam(id);
     });
     m_teamTimer.start(kTeamMs);
 
     // Started and stopped by watchLive(), never on its own.
-    connect(&m_liveTimer, &QTimer::timeout, this, &GameFeed::requestLiveList);
+    connect(&m_liveTimer, &WakeTimer::timeout, this, &GameFeed::requestLiveList);
 
     for (int id : trackedTeams()) {
         requestSchedule(id);
@@ -304,6 +320,19 @@ void GameFeed::get(const QString &url, std::function<void(const QJsonObject &)> 
 
 void GameFeed::refresh()
 {
+    // TCP connections do not survive the tablet sleeping, but Qt does not know
+    // that and will reuse one from its keep-alive pool. If more time has
+    // passed than a poll interval can explain, assume we were asleep and throw
+    // the pool away rather than write into a dead socket.
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    if (m_lastRefresh > 0 && (now - m_lastRefresh) > kSleptSecs) {
+        qInfo("woke after %lld s -- dropping stale connections",
+              static_cast<long long>(now - m_lastRefresh));
+        m_net.clearConnectionCache();
+    }
+    m_lastRefresh = now;
+
+
     // One request per game that matters: the one on the board, plus each
     // followed team's current game if it is live and not already on the board.
     // Everything else on the list is a date and a final score, and neither
@@ -328,8 +357,18 @@ void GameFeed::refresh()
             break;
         }
     }
-    if (m_eventId.isEmpty())
+    if (m_eventId.isEmpty()) {
         pickCurrentEvent();
+        // Still nothing: the schedules never arrived, so there is no game to
+        // follow and nothing above asked for anything. Ask again rather than
+        // waiting out the ten minute schedule timer.
+        if (m_eventId.isEmpty() && m_season.isEmpty()) {
+            for (int id : m_league.teams) {
+                requestSchedule(id);
+                requestTeam(id);
+            }
+        }
+    }
 }
 
 namespace {

@@ -15,6 +15,7 @@ qt_add_executable(cfb_scoreboard
     src/GameFeed.h
     src/EspnUserAgent.h
     src/League.h
+    src/WakeTimer.h
     src/Orientation.cpp
     src/Orientation.h
     src/LogoStore.cpp
@@ -73,6 +74,7 @@ add_executable(football_backend
     src/GameFeed.h
     src/EspnUserAgent.h
     src/League.h
+    src/WakeTimer.h
     src/LogoStore.cpp
     src/LogoStore.h
 )
